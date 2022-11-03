@@ -1,30 +1,23 @@
-using Microsoft.Data.Sqlite;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.Build();
 
-var connection = new SqliteConnection("Data Source=./data.db");
-connection.Open();
+var quotes = JsonSerializer.Deserialize<string[]>(File.ReadAllText("quotes.json"));
+
+if (quotes is null)
+{
+    Console.WriteLine("Can not open file quotes.json.");
+    return;
+}
+
+var rand = new Random();
 
 app.MapGet("/", () =>
 {
-    var command = connection.CreateCommand();
-    command.CommandText = @"
-    SELECT text
-    FROM main
-    ORDER BY random()
-    LIMIT 1
-    ";
-
-    var reader = command.ExecuteReader();
-
-    while (reader.Read())
-    {
-        var name = reader.GetString(0);
-        return name;
-    }
-    return "";
+    var id = rand.Next(0, quotes.Length);
+    return quotes[id];
 });
 
 app.Run();
